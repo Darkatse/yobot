@@ -1382,6 +1382,15 @@ class ClanBattle:
                     extra_msg = None
             try:
                 self.add_subscribe(group_id, user_id, 0, extra_msg)
+                ##########################################################
+                #挂树则清该boss预约
+                group = Clan_group.get_or_none(group_id=group_id)
+                Clan_subscribe.delete().where(
+                    Clan_subscribe.gid == group_id,
+                    Clan_subscribe.qqid == user_id,
+                    Clan_subscribe.subscribe_item == group.boss_num,
+                ).execute()
+                ############################################################
             except ClanBattleError as e:
                 _logger.info('群聊 失败 {} {} {}'.format(user_id, group_id, cmd))
                 return str(e)
