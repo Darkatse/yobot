@@ -421,11 +421,14 @@ class ClanBattle:
             behalf=behalf,
         )
         if defeat:
+            # 死了先加 boss_id
             if group.boss_num == 5:
                 group.boss_num = 1
                 group.boss_cycle += 1
             else:
                 group.boss_num += 1
+
+            # 记录的是尾刀前的剩余血量
             health_before = group.boss_health
             group.boss_health = (
                 self.bossinfo[group.game_server]
@@ -469,6 +472,7 @@ class ClanBattle:
         self._boss_status[group_id] = asyncio.get_event_loop().create_future()
 
         if defeat:
+            # 注意 这个boss_num是击败后的下一只[1,2,3,4,5]
             self.notify_subscribe(group_id, group.boss_num)
 
         return status
@@ -824,7 +828,7 @@ class ClanBattle:
 
         Args:
             group_id: group id
-            boss_num: number of new boss
+            boss_num: number of 'new' boss'
         """
         group = Clan_group.get_or_none(group_id=group_id)
         if group is None:
@@ -832,6 +836,8 @@ class ClanBattle:
         if boss_num is None:
             boss_num = group.boss_num
         notice = []
+
+        # 提醒 新 boss 的预约人
         for subscribe in Clan_subscribe.select().where(
             Clan_subscribe.gid == group_id,
             (Clan_subscribe.subscribe_item == boss_num) |
@@ -841,7 +847,22 @@ class ClanBattle:
             if subscribe.message:
                 msg += subscribe.message
             notice.append(msg)
-            subscribe.delete_instance()
+            # 删除新boss的预约人 (原)
+            # subscribe.delete_instance()
+
+        # 删除上一boss预约人(new)
+        for subscribe_last in Clan_subscribe.select().where(
+            Clan_subscribe.gid == group_id,
+            (Clan_subscribe.subscribe_item == (boss_num + 3) % 5 + 1) |
+            (Clan_subscribe.subscribe_item == 0),
+        ).order_by(Clan_subscribe.sid):
+            subscribe_last.delete_instance()
+
+        # Clan_subscribe.delete().where(
+        #     Clan_subscribe.gid == group_id,
+        #     (Clan_subscribe.subscribe_item == (boss_num + 3) % 5 + 1) |
+        #     (Clan_subscribe.subscribe_item == 0)).execute()
+
         if notice:
             asyncio.ensure_future(self.api.send_group_msg(
                 group_id=group_id,
@@ -850,7 +871,7 @@ class ClanBattle:
 
     def apply_for_challenge(self,
                             group_id: Groupid,
-                            qqid: QQid,
+                            qqid: QQid, # 申请挑战的人的qq
                             *,
                             extra_msg: Optional[str] = None,
                             appli_type: int = 0,
@@ -870,6 +891,8 @@ class ClanBattle:
             raise UserNotInGroup
         if (appli_type != 1) and (extra_msg is None):
             raise InputError('锁定boss时必须留言')
+
+        # 只允许一个人进行挑战
         if group.challenging_member_qq_id is not None:
             nik = self._get_nickname_by_qqid(
                 group.challenging_member_qq_id,
@@ -879,6 +902,32 @@ class ClanBattle:
             if group.boss_lock_type != 1:
                 msg += '\n留言：'+group.challenging_comment
             raise GroupError(msg)
+
+        # （新增）必须先预约才能申请挑战
+        rank = Clan_subscribe.select(Clan_subscribe.sid).where(Clan_subscribe.gid == group_id,
+                                                               Clan_subscribe.qqid == qqid,
+                                                               Clan_subscribe.subscribe_item == group.boss_num)
+        if not rank.exists():
+            msg = '你必须先预约才能申请出刀'
+            raise GroupError(msg)
+
+        # （新增）必须等排自己前面的人打完了才能申请
+        if rank != 1:
+            notice = []
+            # 提醒 前面的人
+            for subscribe in Clan_subscribe.select().where(
+                    Clan_subscribe.gid == group_id,
+                    Clan_subscribe.sid < rank,
+                    Clan_subscribe.subscribe_item == group.boss_num,
+            ).order_by(Clan_subscribe.sid):
+                msg = atqq(subscribe.qqid)
+                notice.append(msg)
+                warning = '你前面还有{}个人，请等待\n'.format(rank-1)
+                atlist = '\n'.join(notice)
+                message = warning + atlist +'\n出完刀后再申请'
+            raise GroupError(message)
+
+
         group.challenging_member_qq_id = qqid
         group.challenging_start_time = int(time.time())
         group.challenging_comment = extra_msg
