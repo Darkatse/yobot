@@ -902,30 +902,34 @@ class ClanBattle:
             if group.boss_lock_type != 1:
                 msg += '\n留言：'+group.challenging_comment
             raise GroupError(msg)
+            
+        
 
-        # （新增）必须先预约才能申请挑战
-        rank = Clan_subscribe.select(Clan_subscribe.sid).where(Clan_subscribe.gid == group_id,
-                                                               Clan_subscribe.qqid == qqid,
-                                                               Clan_subscribe.subscribe_item == group.boss_num)
-        if not rank.exists():
+        ##### （新增）必须先预约才能申请挑战  #####################################################
+        rev_group = Clan_subscribe.select().where(Clan_subscribe.gid == group_id,
+                                                  Clan_subscribe.subscribe_item == group.boss_num
+                                                  ).order_by(Clan_subscribe.sid)
+        is_rev = rev_group.select().where(Clan_subscribe.qqid==qqid)
+        if not is_rev.exists():
             msg = '你必须先预约才能申请出刀'
             raise GroupError(msg)
 
-        # （新增）必须等排自己前面的人打完了才能申请
-        if rank != 1:
-            notice = []
-            # 提醒 前面的人
-            for subscribe in Clan_subscribe.select().where(
-                    Clan_subscribe.gid == group_id,
-                    Clan_subscribe.sid < rank,
-                    Clan_subscribe.subscribe_item == group.boss_num,
-            ).order_by(Clan_subscribe.sid):
-                msg = atqq(subscribe.qqid)
-                notice.append(msg)
-                warning = '你前面还有{}个人，请等待\n'.format(rank-1)
-                atlist = '\n'.join(notice)
-                message = warning + atlist +'\n出完刀后再申请'
-            raise GroupError(message)
+        # ####### (新增）必须等排自己前面的人打完了才能申请 #############################
+        count = 0
+        notice = []
+        for rev_er in rev_group:
+            if rev_er.qqid != qqid:
+                count += 1
+                notice.append(atqq(rev_er.qqid))
+            else:
+                if count != 0:
+                    warning = '你前面还有{}个人，请等待\n'.format(count)
+                    atlist = '\n'.join(notice)
+                    message = warning + atlist +'\n出完刀后再申请'
+                    raise GroupError(message)
+                else:
+                    break
+        ###############################################################################
 
 
         group.challenging_member_qq_id = qqid
