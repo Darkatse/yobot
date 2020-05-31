@@ -440,11 +440,11 @@ class ClanBattle:
         # 如果当前正在挑战，则取消挑战
         if user.qqid == group.challenging_member_qq_id:
             group.challenging_member_qq_id = None
-        # 如果当前正在挂树，则取消挂树
+        # 如果当前正在挂树或预约，则取消挂树或预约
         Clan_subscribe.delete().where(
             Clan_subscribe.gid == group_id,
             Clan_subscribe.qqid == qqid,
-            Clan_subscribe.subscribe_item == 0,
+            (Clan_subscribe.subscribe_item == 0) | (Clan_subscribe.subscribe_item == group.boss_num),
         ).execute()
 
         challenge.save()
