@@ -26,6 +26,55 @@ from .util import atqq, pcr_datetime, pcr_timestamp, timed_cached_func
 _logger = logging.getLogger(__name__)
 
 
+
+class Vote:
+    def __init__(self,max_v):
+        self.isvoting = False
+        self.target_id = 0
+        self.caller = 0
+        self.nApproval = 0
+        self.approval_list = []
+        self.max = max_v
+
+    def call(self,target,caller):
+        self.isvoting = True
+        self.target_id = target
+        self.caller = caller
+        self.nApproval += 1
+
+    def add(self,qqid):
+        self.nApproval += 1
+        self.approval_list.append(qqid)
+        if self.nApproval == self.max:
+            return 1
+        else:
+            return 0
+
+    def reset(self):
+        self.isvoting = False
+        self.target_id = 0
+        self.nApproval = 0
+        self.approval_list = []
+
+    def cancel(self,qqid):
+        if qqid != self.caller:
+            return '只能由发起人取消'
+        else:
+            self.reset()
+            return '取消成功'
+
+    def __str__(self):
+        if self.isvoting is False:
+            return '当前未发起投票'
+        else:
+            msg = '当前正在对{}投票中\n发起人：{}\n支持人数为{}\n当达到{}人时，将踢出预约列表'\
+                .format(atqq(self.target_id),atqq(self.caller),self.nApproval,self.max)
+            return msg
+
+
+
+
+
 class ClanBattle:
     Passive = True
     Active = True
@@ -61,6 +110,7 @@ class ClanBattle:
         '查4': 24,
         '查5': 25,
         '让刀': 26,
+        '投票': 27,
     }
 
     Server = {
@@ -77,6 +127,7 @@ class ClanBattle:
         self.setting = glo_setting
         self.bossinfo = glo_setting['boss']
         self.api = bot_api
+        self.vote = Vote(4)
 
         # log
         if not os.path.exists(os.path.join(glo_setting['dirname'], 'log')):
@@ -781,6 +832,20 @@ class ClanBattle:
             message=message,
         )
 
+    def check_in_reserve_list(self, group_id: Groupid, check_qq_id: QQid, boss_num=None):
+        if boss_num is None:#检查当前boss
+            group = Clan_group.get_or_none(group_id=group_id)
+            boss_num = group.boss_num
+
+        is_in = Clan_subscribe.select().where(Clan_subscribe.gid == group_id,
+                                                  Clan_subscribe.subscribe_item == boss_num,
+                                                  Clan_subscribe.qqid == check_qq_id
+                                                  )
+        if not is_in.exists():
+            return False
+        else:
+            return True
+
     def exchange_subscribe(self, group_id: Groupid, qqid: QQid, boss_num):
         '''
         Exchange of reservation order with next person
@@ -865,6 +930,24 @@ class ClanBattle:
         ).execute()
         return deleted_counts
 
+    def cancel_present_subscribe(self, group_id: Groupid, qqid: QQid) -> int:
+        """
+        cancel a subscription.
+
+        Args:
+            group_id: group id
+            qqid: qq id of subscriber
+            boss_num: number of boss to be canceled
+        """
+        group = Clan_group.get_or_none(group_id=group_id)
+        boss_num = group.boss_num
+        deleted_counts = Clan_subscribe.delete().where(
+            Clan_subscribe.gid == group_id,
+            Clan_subscribe.qqid == qqid,
+            Clan_subscribe.subscribe_item == boss_num,
+        ).execute()
+        return deleted_counts
+
     def notify_subscribe(self, group_id: Groupid, boss_num=None, send_private_msg=False):
         """
         send notification to subsciber and remove them (when boss is defeated).
@@ -905,6 +988,7 @@ class ClanBattle:
         #     Clan_subscribe.gid == group_id,
         #     (Clan_subscribe.subscribe_item == (boss_num + 3) % 5 + 1) |
         #     (Clan_subscribe.subscribe_item == 0)).execute()
+        self.vote.reset()
 
         if notice:
             asyncio.ensure_future(self.api.send_group_msg(
@@ -1546,6 +1630,41 @@ class ClanBattle:
             self.exchange_subscribe(group_id, user_id, boss_num)
 
             return '预约顺序已更新'
+        elif match_num == 27: #投票
+            match_hold = re.match(r'^投票踢人 *(?:\[CQ:at,qq=(\d+)\])?$', cmd)
+            match_b = re.match(r'^投票 *([0-1])?$', cmd)
+            if match_hold:
+                if self.vote.isvoting is True:
+                   return '当前正在投票中，请使用 [投票状态] 查询'
+                else:
+                    tar = match_hold.group(1)
+                    is_in = self.check_in_reserve_list(group_id,tar)
+                    if is_in is True:
+                        self.vote.call(target=int(tar),
+                                       caller=int(user_id))
+                        self.vote.caller = int(user_id)
+                        return str(self.vote)
+                    else:
+                        return '该玩家不在当前预约列表之中'
+            elif match_b:
+                isApp = match_b.group(1)
+                if isApp == 1: #赞成票
+                    full = self.vote.add(user_id)
+                    if full == 1:
+                        count = self.cancel_present_subscribe(group_id, self.vote.target_id)
+                        self.vote.reset()
+                        if count == 0:
+                            return '踢出失败，该玩家已不在当前预约列表中'
+                        else:
+                            return '踢出成功'
+                    return '投票成功'
+            elif cmd == '投票状态':
+                return str(self.vote)
+            elif cmd == '取消投票':
+                return self.vote.cancel(user_id)
+            else:
+                msg = '发起投票请输入：【投票踢人 @qq】\n赞成投票请输入：【投票 1】\n取消投票请输入：【取消投票】\n查看投票请输入：【投票状态】'
+                return msg
 
     def register_routes(self, app: Quart):
 
