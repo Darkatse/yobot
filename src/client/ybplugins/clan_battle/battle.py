@@ -56,6 +56,7 @@ class Vote:
         self.isvoting = False
         self.target_id = 0
         self.nApproval = 0
+        self.caller = 0
         self.approval_list = []
 
     def cancel(self,qqid):
