@@ -781,6 +781,48 @@ class ClanBattle:
             message=message,
         )
 
+    def exchange_subscribe(self, group_id: Groupid, qqid: QQid, boss_num):
+        '''
+        Exchange of reservation order with next person
+        [A,B,C] -> [B,A,C] : A's request
+        [A,B,C,D] -> [A,B,D,C] : C's request
+        '''
+
+        rev_group = Clan_subscribe.select().where(Clan_subscribe.gid == group_id,
+                                                  Clan_subscribe.subscribe_item == boss_num
+                                                  ).order_by(Clan_subscribe.sid)
+        is_rev = rev_group.select().where(Clan_subscribe.qqid == qqid)
+        if not is_rev.exists():
+            msg = '你没有预约boss{}'.format(boss_num)
+            raise UserError(msg)
+
+        # ####### 交换信息 #############################
+        isNext = False
+        A_info = []
+        B_info = []
+        for rev_er in rev_group:
+            if rev_er.qqid == qqid:
+                A_info.append(rev_er.sid)
+                A_info.append(rev_er.qqid)
+                A_info.append(rev_er.message)
+                isNext = True
+            if isNext is True:
+                B_info.append(rev_er.sid)
+                B_info.append(rev_er.qqid)
+                B_info.append(rev_er.message)
+                break
+        else:
+            raise UserError('你现在是最后一个预约的，无法让刀，请直接取消预约')
+
+        # B -> A
+        Clan_subscribe.update(qqid=B_info[1],message=B_info[2]).where(Clan_subscribe.sid == A_info[0]).execute()
+        # A -> B
+        Clan_subscribe.update(qqid=A_info[1], message=A_info[2]).where(Clan_subscribe.sid == B_info[0]).execute()
+
+        ###############################################################################
+        
+        
+
     def get_subscribe_list(self, group_id: Groupid, boss_num=None) -> List[Tuple[int, QQid, dict]]:
         """
         get the subscribe lists.
@@ -1497,7 +1539,13 @@ class ClanBattle:
                     reply += '：' + m['message']
             return reply
         elif match_num == 26:
-            return '测试成功'
+            match = re.match(r'^让刀([1-5])$', cmd)
+            if not match:
+                return '请输入格式：“让刀[1-5]”'
+            boss_num = int(match.group(1))
+            self.exchange_subscribe(group_id, user_id, boss_num)
+
+            return '预约顺序已更新'
 
     def register_routes(self, app: Quart):
 
