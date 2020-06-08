@@ -110,7 +110,8 @@ class ClanBattle:
         '查4': 24,
         '查5': 25,
         '让刀': 26,
-        '投票': 27,
+        '投票': 
+      ,
     }
 
     Server = {
@@ -1652,10 +1653,10 @@ class ClanBattle:
                     return '投票成功'
             elif cmd == '投票状态':
                 return str(self.vote)
-            elif cmd == '取消投票':
+            elif cmd == '投票取消':
                 return self.vote.cancel(user_id)
             else:
-                msg = '发起投票请输入：【投票踢人 @qq】\n赞成投票请输入：【投票 1】\n取消投票请输入：【取消投票】\n查看投票请输入：【投票状态】'
+                msg = '发起投票请输入：【投票踢人 @qq】\n赞成投票请输入：【投票 1】\n取消投票请输入：【投票取消】\n查看投票请输入：【投票状态】'
                 return msg
 
     def register_routes(self, app: Quart):
