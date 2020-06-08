@@ -41,6 +41,7 @@ class Vote:
         self.target_id = target
         self.caller = caller
         self.nApproval += 1
+        self.approval_list.append(caller)
 
     def add(self,qqid):
         if self.isvoting is False:
