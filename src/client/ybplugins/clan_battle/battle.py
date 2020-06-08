@@ -60,6 +60,7 @@ class ClanBattle:
         '查3': 23,
         '查4': 24,
         '查5': 25,
+        '让刀': 26,
     }
 
     Server = {
@@ -1355,7 +1356,7 @@ class ClanBattle:
             )
             return '请在面板中查看：'+url
         elif match_num == 10:  # 预约
-            match = re.match(r'^预约([1-5]) *(?:[\:：](.*))?$', cmd)
+            match = re.match(r'^预约([1-5]) *(?:(.*))?$', cmd)
             if not match:
                 return
             boss_num = int(match.group(1))
@@ -1363,7 +1364,12 @@ class ClanBattle:
             if isinstance(extra_msg, str):
                 extra_msg = extra_msg.strip()
                 if not extra_msg:
-                    extra_msg = None
+                    # 为了方便团员 必须输入备注信息：如预计伤害，备注等等
+                    msg = '请输入格式：‘预约[1-5] 备注（如预计伤害等）’\n'+\
+                          '例如：“预约1 160w”\n'+\
+                          '为了方便团友请务必写上预计伤害等备注'
+                    return msg
+                    #extra_msg = None
             try:
                 self.add_subscribe(group_id, user_id, boss_num, extra_msg)
             except ClanBattleError as e:
@@ -1482,6 +1488,8 @@ class ClanBattle:
                 if m.get('message'):
                     reply += '：' + m['message']
             return reply
+        elif match_num == 26:
+            return '测试成功'
 
     def register_routes(self, app: Quart):
 
