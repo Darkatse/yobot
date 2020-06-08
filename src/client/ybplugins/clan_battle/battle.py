@@ -43,6 +43,8 @@ class Vote:
         self.nApproval += 1
 
     def add(self,qqid):
+        if self.isvoting is False:
+            return -2
         if qqid in self.approval_list:
             return -1
         self.nApproval += 1
@@ -1661,6 +1663,8 @@ class ClanBattle:
                             return '踢出失败，该玩家已不在当前预约列表中'
                         else:
                             return '踢出成功'
+                    elif full == -2:
+                        return '当前未发起投票'
                     elif full == -1:
                         return '你已经投过票了'
                     return '投票成功'
@@ -1668,9 +1672,11 @@ class ClanBattle:
                 return str(self.vote)
             elif cmd == '投票取消':
                 return self.vote.cancel(user_id)
-            else:
+            elif cmd == '投票帮助':
                 msg = '发起投票请输入：【投票踢人 @qq】\n赞成投票请输入：【投票 1】\n取消投票请输入：【投票取消】\n查看投票请输入：【投票状态】'
                 return msg
+            else:
+                return 
 
     def register_routes(self, app: Quart):
 
