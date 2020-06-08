@@ -43,6 +43,8 @@ class Vote:
         self.nApproval += 1
 
     def add(self,qqid):
+        if qqid in self.approval_list:
+            return -1
         self.nApproval += 1
         self.approval_list.append(qqid)
         if self.nApproval == self.max:
@@ -1638,7 +1640,7 @@ class ClanBattle:
                 if self.vote.isvoting is True:
                    return '当前正在投票中，请使用 [投票状态] 查询'
                 else:
-                    tar = match_hold.group(1)
+                    tar = int(match_hold.group(1))
                     is_in = self.check_in_reserve_list(group_id,tar)
                     if is_in is True:
                         self.vote.call(target=int(tar),
@@ -1648,7 +1650,7 @@ class ClanBattle:
                     else:
                         return '该玩家不在当前预约列表之中'
             elif match_b:
-                isApp = match_b.group(1)
+                isApp = int(match_b.group(1))
                 if isApp == 1: #赞成票
                     full = self.vote.add(user_id)
                     if full == 1:
@@ -1658,6 +1660,8 @@ class ClanBattle:
                             return '踢出失败，该玩家已不在当前预约列表中'
                         else:
                             return '踢出成功'
+                    elif full == -1:
+                        return '你已经投过票了'
                     return '投票成功'
             elif cmd == '投票状态':
                 return str(self.vote)
