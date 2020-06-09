@@ -1648,7 +1648,7 @@ class ClanBattle:
 
         elif match_num == 27: #投票
             match_hold = re.match(r'^投票踢人 *(?:\[CQ:at,qq=(\d+)\])?$', cmd)
-            match_b = re.match(r'^投票 *([0-1])?$', cmd)
+            match_b = re.match(r'^投票 *([1])?$', cmd)
             if match_hold:
                 if self.vote.isvoting is True:
                    return '当前正在投票中，请使用 [投票状态] 查询'
@@ -1658,7 +1658,7 @@ class ClanBattle:
                     if is_in is True:
                         self.vote.call(target=int(tar),
                                        caller=int(user_id))
-                        return self.get_vote_state()
+                        return self.get_vote_state()+'\n请输入[投票1]进行投票'
                     else:
                         return '该玩家不在当前预约列表之中'
             elif match_b:
