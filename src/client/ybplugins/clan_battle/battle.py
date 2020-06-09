@@ -877,6 +877,7 @@ class ClanBattle:
                 A_info.append(rev_er.qqid)
                 A_info.append(rev_er.message)
                 isNext = True
+                continue
             if isNext is True:
                 B_info.append(rev_er.sid)
                 B_info.append(rev_er.qqid)
@@ -1644,10 +1645,10 @@ class ClanBattle:
                 return '预约顺序已更新'
 
         elif match_num == 27: #投票
-            return cmd
             match_hold = re.match(r'^投票踢人 *(?:\[CQ:at,qq=(\d+)\])?$', cmd)
             match_b = re.match(r'^投票 *([0-1])?$', cmd)
             if match_hold:
+                return str(match_hold.group(1))
                 if self.vote.isvoting is True:
                    return '当前正在投票中，请使用 [投票状态] 查询'
                 else:
@@ -1684,7 +1685,7 @@ class ClanBattle:
                 msg = '发起投票请输入：【投票踢人 @qq】\n赞成投票请输入：【投票 1】\n取消投票请输入：【投票取消】\n查看投票请输入：【投票状态】'
                 return msg
             else:
-                return 
+                return len(cmd)
 
     def register_routes(self, app: Quart):
 
