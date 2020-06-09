@@ -884,11 +884,12 @@ class ClanBattle:
                 break
         else:
             raise UserError('你现在是最后一个预约的，无法让刀，请直接取消预约')
-
+　　　　
         # B -> A
         Clan_subscribe.update(qqid=B_info[1],message=B_info[2]).where(Clan_subscribe.sid == A_info[0]).execute()
         # A -> B
         Clan_subscribe.update(qqid=A_info[1], message=A_info[2]).where(Clan_subscribe.sid == B_info[0]).execute()
+        raise UserError(A_info + B_info)
 
         ###############################################################################
         
@@ -1629,14 +1630,21 @@ class ClanBattle:
                     reply += '：' + m['message']
             return reply
         elif match_num == 26:
+            if len(cmd) != 3:
+                return
             match = re.match(r'^让刀([1-5])$', cmd)
             if not match:
                 return '请输入格式：“让刀[1-5]”'
             boss_num = int(match.group(1))
-            self.exchange_subscribe(group_id, user_id, boss_num)
+            try:
+                self.exchange_subscribe(group_id, user_id, boss_num)
+            except UserError as e:
+                return str(e)
+            else:
+                return '预约顺序已更新'
 
-            return '预约顺序已更新'
         elif match_num == 27: #投票
+            return cmd
             match_hold = re.match(r'^投票踢人 *(?:\[CQ:at,qq=(\d+)\])?$', cmd)
             match_b = re.match(r'^投票 *([0-1])?$', cmd)
             if match_hold:
