@@ -63,8 +63,8 @@ class Vote:
         self.approval_list = []
 
     def cancel(self,qqid):
-        if qqid != self.caller:
-            return '只能由发起人取消'
+        if qqid != self.caller or qqid != self.target_id:
+            return '只能由发起人或者被投票者取消'
         else:
             self.reset()
             return '取消成功'
