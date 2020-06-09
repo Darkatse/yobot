@@ -884,7 +884,7 @@ class ClanBattle:
                 break
         else:
             raise UserError('你现在是最后一个预约的，无法让刀，请直接取消预约')
-　　　　
+            
         # B -> A
         Clan_subscribe.update(qqid=B_info[1],message=B_info[2]).where(Clan_subscribe.sid == A_info[0]).execute()
         # A -> B
