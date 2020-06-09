@@ -69,14 +69,6 @@ class Vote:
             self.reset()
             return '取消成功'
 
-    def __str__(self):
-        if self.isvoting is False:
-            return '当前未发起投票'
-        else:
-            msg = '当前正在对{}投票中\n发起人：{}\n支持人数为{}\n当达到{}人时，将踢出预约列表'\
-                .format(atqq(self.target_id),atqq(self.caller),self.nApproval,self.max)
-            return msg
-
 
 
 
@@ -852,6 +844,17 @@ class ClanBattle:
         else:
             return True
 
+    def get_vote_state(self):
+        if self.vote.isvoting is False:
+            return '当前未发起投票'
+        else:
+            msg = '当前正在对{}投票中\n发起人：{}\n支持人数为{}\n当达到{}人时，将踢出预约列表' \
+                .format(self._get_nickname_by_qqid(self.vote.target_id),
+                        self._get_nickname_by_qqid(self.vote.caller),
+                        self.vote.nApproval,
+                        self.vote.max)
+            return msg
+
     def exchange_subscribe(self, group_id: Groupid, qqid: QQid, boss_num):
         '''
         Exchange of reservation order with next person
@@ -890,7 +893,6 @@ class ClanBattle:
         Clan_subscribe.update(qqid=B_info[1],message=B_info[2]).where(Clan_subscribe.sid == A_info[0]).execute()
         # A -> B
         Clan_subscribe.update(qqid=A_info[1], message=A_info[2]).where(Clan_subscribe.sid == B_info[0]).execute()
-        raise UserError(A_info + B_info)
 
         ###############################################################################
         
@@ -1657,8 +1659,7 @@ class ClanBattle:
                     if is_in is True:
                         self.vote.call(target=int(tar),
                                        caller=int(user_id))
-                        self.vote.caller = int(user_id)
-                        return str(self.vote)
+                        return self.get_vote_state()
                     else:
                         return '该玩家不在当前预约列表之中'
             elif match_b:
@@ -1676,16 +1677,16 @@ class ClanBattle:
                         return '当前未发起投票'
                     elif full == -1:
                         return '你已经投过票了'
-                    return '投票成功'
+                    return '投票成功，当前支持人数为{}'.format(self.vote.nApproval)
             elif cmd == '投票状态':
-                return str(self.vote)
+                return self.get_vote_state()
             elif cmd == '投票取消':
                 return self.vote.cancel(user_id)
             elif cmd == '投票帮助':
                 msg = '发起投票请输入：【投票踢人 @qq】\n赞成投票请输入：【投票 1】\n取消投票请输入：【投票取消】\n查看投票请输入：【投票状态】'
                 return msg
             else:
-                return len(cmd)
+                return
 
     def register_routes(self, app: Quart):
 
