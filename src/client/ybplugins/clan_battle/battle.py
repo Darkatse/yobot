@@ -848,7 +848,7 @@ class ClanBattle:
         if self.vote.isvoting is False:
             return '当前未发起投票'
         else:
-            msg = '当前正在对{}投票中\n发起人：{}\n支持人数为{}\n当达到{}人时，将踢出预约列表' \
+            msg = '当前正在对{}投票中\n发起人：{}\n支持人数为{}\n当达到{}人时，将踢出预约列表'\
                 .format(self._get_nickname_by_qqid(self.vote.target_id),
                         self._get_nickname_by_qqid(self.vote.caller),
                         self.vote.nApproval,
@@ -1650,7 +1650,6 @@ class ClanBattle:
             match_hold = re.match(r'^投票踢人 *(?:\[CQ:at,qq=(\d+)\])?$', cmd)
             match_b = re.match(r'^投票 *([0-1])?$', cmd)
             if match_hold:
-                return str(match_hold.group(1))
                 if self.vote.isvoting is True:
                    return '当前正在投票中，请使用 [投票状态] 查询'
                 else:
