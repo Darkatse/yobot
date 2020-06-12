@@ -1656,7 +1656,7 @@ class ClanBattle:
         elif match_num == 27: #投票
             match_hold = re.match(r'^投票踢人 *(?:\[CQ:at,qq=(\d+)\])?$', cmd)
             match_b = re.match(r'^投票 *([1])?$', cmd)
-            msg_z = cmd
+            msg_z = str(list(cmd))
             if match_hold:
                 msg_z += "\nt:{},c:{}".format(match_hold.group(1),user_id)
             return msg_z
