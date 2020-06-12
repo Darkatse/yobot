@@ -1654,12 +1654,9 @@ class ClanBattle:
                 return '预约顺序已更新'
 
         elif match_num == 27: #投票
-            match_hold = re.match(r'^投票踢人 *(?:\[CQ:at,qq=(\d+)\])?$', cmd)
-            match_b = re.match(r'^投票 *([1])?$', cmd)
-            msg_z = str(list(cmd))
-            if match_hold:
-                msg_z += "\nt:{},c:{}".format(match_hold.group(1),user_id)
-            return msg_z
+            match_hold = re.match(r'^投票踢人 *(?:\[CQ:at,qq=(\d+)\]) *$', cmd)
+            match_b = re.match(r'^投票 *([1]) *$', cmd)
+
             if cmd == '投票状态':
                 return self.get_vote_state()
             elif cmd == '投票取消':
