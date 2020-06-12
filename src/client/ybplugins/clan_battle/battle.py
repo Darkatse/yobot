@@ -1656,6 +1656,8 @@ class ClanBattle:
         elif match_num == 27: #投票
             match_hold = re.match(r'^投票踢人 *(?:\[CQ:at,qq=(\d+)\])?$', cmd)
             match_b = re.match(r'^投票 *([1])?$', cmd)
+            if match_hold:
+                return "t:{},c:{}".format(match_hold.group(1),user_id)
             if cmd == '投票状态':
                 return self.get_vote_state()
             elif cmd == '投票取消':
