@@ -1640,9 +1640,7 @@ class ClanBattle:
                     reply += '：' + m['message']
             return reply
         elif match_num == 26:
-            if len(cmd) != 3:
-                return
-            match = re.match(r'^让刀([1-5])$', cmd)
+            match = re.match(r'^让刀 *([1-5])$', cmd)
             if not match:
                 return '请输入格式：“让刀[1-5]”'
             boss_num = int(match.group(1))
