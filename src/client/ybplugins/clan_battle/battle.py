@@ -1649,7 +1649,9 @@ class ClanBattle:
         elif match_num == 27: #投票
             match_hold = re.match(r'^投票踢人 *(?:\[CQ:at,qq=(\d+)\])?$', cmd)
             match_b = re.match(r'^投票 *([1])?$', cmd)
-            if match_hold.group(1) is not None:
+            if match_hold:
+                if match_hold.group(1) is None:
+                   return
                 if self.vote.isvoting is True:
                    return '当前正在投票中，请使用 [投票状态] 查询'
                 else:
@@ -1661,7 +1663,9 @@ class ClanBattle:
                         return self.get_vote_state()+'\n请输入[投票1]进行投票'
                     else:
                         return '该玩家不在当前预约列表之中'
-            elif match_b.group(1) is not None:
+            elif match_b:
+                if match_b.group(1) is None:
+                   return
                 isApp = int(match_b.group(1))
                 if isApp == 1: #赞成票
                     full = self.vote.add(user_id)
