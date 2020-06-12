@@ -1660,7 +1660,7 @@ class ClanBattle:
             if cmd == '投票状态':
                 return self.get_vote_state()
             elif cmd == '投票取消':
-                return self.vote.cancel(user_id)
+                return self.vote.cancel(int(user_id))
             elif cmd == '投票帮助':
                 msg = '发起投票请输入：【投票踢人 @qq】\n赞成投票请输入：【投票 1】\n取消投票请输入：【投票取消】\n查看投票请输入：【投票状态】'
                 return msg
