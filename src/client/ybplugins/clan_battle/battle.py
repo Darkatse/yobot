@@ -68,7 +68,14 @@ class Vote:
         else:
             self.reset()
             return '取消成功'
-
+        
+    def __str__(self):
+        return 'isvoting = {}\ntarget_id = {}\ncaller = {}\nnApproval = {}\napproval_list = {}'\
+            .format(self.isvoting,
+                    self.target_id,
+                    self.caller,
+                    self.nApproval,
+                    self.approval_list)
 
 
 
@@ -1649,13 +1656,25 @@ class ClanBattle:
         elif match_num == 27: #投票
             match_hold = re.match(r'^投票踢人 *(?:\[CQ:at,qq=(\d+)\])?$', cmd)
             match_b = re.match(r'^投票 *([1])?$', cmd)
-            if match_hold:
+            if cmd == '投票状态':
+                return self.get_vote_state()
+            elif cmd == '投票取消':
+                return self.vote.cancel(user_id)
+            elif cmd == '投票帮助':
+                msg = '发起投票请输入：【投票踢人 @qq】\n赞成投票请输入：【投票 1】\n取消投票请输入：【投票取消】\n查看投票请输入：【投票状态】'
+                return msg
+            elif cmd == '投票debug':
+                return str(self.vote)
+            elif match_hold:
                 if match_hold.group(1) is None:
                    return
                 if self.vote.isvoting is True:
                    return '当前正在投票中，请使用 [投票状态] 查询'
                 else:
                     tar = int(match_hold.group(1))
+                    if tar == int(user_id):
+                        return '你不能对自己投票'
+                    return '进入投票踢人状态，踢人者{}，被踢人者{}'.format(user_id,match_hold.group(1))
                     is_in = self.check_in_reserve_list(group_id,tar)
                     if is_in is True:
                         self.vote.call(target=int(tar),
@@ -1681,13 +1700,6 @@ class ClanBattle:
                     elif full == -1:
                         return '你已经投过票了'
                     return '投票成功，当前支持人数为{}'.format(self.vote.nApproval)
-            elif cmd == '投票状态':
-                return self.get_vote_state()
-            elif cmd == '投票取消':
-                return self.vote.cancel(user_id)
-            elif cmd == '投票帮助':
-                msg = '发起投票请输入：【投票踢人 @qq】\n赞成投票请输入：【投票 1】\n取消投票请输入：【投票取消】\n查看投票请输入：【投票状态】'
-                return msg
             else:
                 return
 
