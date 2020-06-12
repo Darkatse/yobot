@@ -1675,7 +1675,6 @@ class ClanBattle:
                     tar = int(match_hold.group(1))
                     if tar == int(user_id):
                         return '你不能对自己投票'
-                    return '进入投票踢人状态，踢人者{}，被踢人者{}'.format(user_id,match_hold.group(1))
                     is_in = self.check_in_reserve_list(group_id,tar)
                     if is_in is True:
                         self.vote.call(target=int(tar),
