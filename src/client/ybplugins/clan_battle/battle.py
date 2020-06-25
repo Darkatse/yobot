@@ -498,10 +498,11 @@ class ClanBattle:
         if user.qqid == group.challenging_member_qq_id:
             group.challenging_member_qq_id = None
         # 如果当前正在挂树或预约，则取消挂树或预约
+        the_boss = (group.boss_num+3)%5+1 if defeat else group.boss_num
         Clan_subscribe.delete().where(
             Clan_subscribe.gid == group_id,
             Clan_subscribe.qqid == qqid,
-            (Clan_subscribe.subscribe_item == 0) | (Clan_subscribe.subscribe_item == (group.boss_num+3)%5+1),
+            (Clan_subscribe.subscribe_item == 0) | (Clan_subscribe.subscribe_item == the_boss),
         ).execute()
 
         challenge.save()
