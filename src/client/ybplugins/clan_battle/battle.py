@@ -501,7 +501,7 @@ class ClanBattle:
         Clan_subscribe.delete().where(
             Clan_subscribe.gid == group_id,
             Clan_subscribe.qqid == qqid,
-            (Clan_subscribe.subscribe_item == 0) | (Clan_subscribe.subscribe_item == group.boss_num),
+            (Clan_subscribe.subscribe_item == 0) | (Clan_subscribe.subscribe_item == (group.boss_num+3)%5+1),
         ).execute()
 
         challenge.save()
