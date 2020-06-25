@@ -46,7 +46,7 @@ Linux 用户可以使用 mirai 部署，具体请看[这里](./Linux-cqhttp-mira
 
 配置正确后，启动 httpapi 插件后会反复出现如下都提示
 
-![配置正确图片](https://vs.yixuedh.com/assets/img/yobot/8ba6b840bab3ac25.jpg)
+![配置正确图片](https://img.yobot.win/yobot/8ba6b840bab3ac25.jpg)
 
 ## 运行 yobot 服务
 
@@ -54,7 +54,7 @@ Linux 用户可以使用 mirai 部署，具体请看[这里](./Linux-cqhttp-mira
 
 源码运行需要使用 git 作为版本管理和更新工具，如果没有使用过 git 可以阅读：[git官网](https://git-scm.com/)，[git教程](https://www.runoob.com/git/git-tutorial.html)
 
-确保python版本至少为3.6
+确保 python 版本至少为 3.6
 
 下载源码 `git clone https://github.com/yuudi/yobot.git`
 
@@ -85,9 +85,9 @@ sh yobotg.sh  # 如果python的路径不是python3，请手动修改这个脚本
 
 如果需要更换主机地址、端口等信息请修改src\client\yobot_config.json配置文件。
 
-![windows下正确启动图](https://vs.yixuedh.com/assets/img/yobot/aaf38d1a5cbc1c87.jpg)
+![windows下正确启动图](https://img.yobot.win/yobot/aaf38d1a5cbc1c87.jpg)
 
-![windows下正确yobot与httpapi成功通信](https://vs.yixuedh.com/assets/img/yobot/8179fdd1e46690b2.jpg)
+![windows下正确yobot与httpapi成功通信](https://img.yobot.win/yobot/8179fdd1e46690b2.jpg)
 
 ### 验证安装
 

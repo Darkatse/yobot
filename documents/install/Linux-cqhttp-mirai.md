@@ -2,7 +2,7 @@
 
 ## 部署过程
 
-安装环境
+### 环境准备
 
 ```shell
 # RHEL / CentOS:
@@ -20,13 +20,14 @@ useradd -g qqbot -m qqbot
 su qqbot
 ```
 
-新建一个 screen
+这里我们用 screen 作为终端复用工具，具体用法请搜索 screen 教程  
+现在新建一个 screen 终端
 
 ```shell
 screen -S qqbot
 ```
 
-下载并启动 yobot
+### 部署 yobot
 
 ```shell
 mkdir -p ~/qqbot/yobot
@@ -51,36 +52,37 @@ sh yobotg.sh
 
 按下 `ctrl-a , c` 连续组合键，新建一个 screen shell
 
-启动 mirai-console
+### 部署 mirai
+
+下载 miraiOK
+
+下面这个是 amd64 的可执行文件，如果你的计算机不是 amd64 架构，请在[这里](https://github.com/LXY1226/MiraiOK/#下载地址)找到其他的可执行文件
 
 ```shell
-mkdir -p ~/qqbot/mirai
+mkdir -p ~/qqbot/mirai/plugins/CQHTTPMirai
 cd ~/qqbot/mirai
-
-# 你可以在这里找到最新版本：https://github.com/mamoe/mirai-console-wrapper/releases
-wget https://github.com/mamoe/mirai-console-wrapper/releases/download/1.3.0/mirai-console-wrapper-1.3.0-all.jar
-java -jar mirai-console-wrapper-1.3.0-all.jar
+wget http://t.imlxy.net:64724/mirai/MiraiOK/miraiOK_linux_amd64 -O miraiOK
 ```
 
-在 mirai-console 里登录 QQ 并下载 CQHTTPMirai 插件
+下载 cqhttp-mirai
+
+你也可以在[这里](https://github.com/yyuueexxiinngg/cqhttp-mirai/releases)找到最新版本
 
 ```shell
-# （mirai-console内）
-# 登录 QQ
-login 123456789 ppaasswwdd # 注意改成你的QQ小号的账号密码
+cd ~/qqbot/mirai/plugins
 
-# 安装 cqhttp-mirai
-install CQHTTPMirai
+wget https://github.com/yyuueexxiinngg/cqhttp-mirai/releases/download/0.1.4/cqhttp-mirai-0.1.4-all.jar
+# 国内可改用 http://yopan.loli.show/mirai-plugins/CQHTTPMirai/CQHTTPMirai-0.1.4.jar
 ```
-
-按下 `ctrl-a , c` 连续组合键，新建一个 screen shell
 
 修改 CQHTTPMirai 配置文件
 
 ```shell
-mkdir -p ~/qqbot/mirai/plugins/CQHTTPMirai
 cd ~/qqbot/mirai/plugins/CQHTTPMirai
-vi setting.yml
+vim setting.yml
+# 如果你不熟悉 vim，建议使用 nano
+# yum install nano -y 或 apt-get install nano -y
+# nano setting.yml
 ```
 
 修改配置文件如下（注意修改 QQ 号）
@@ -99,18 +101,16 @@ vi setting.yml
 # 详细说明请参考 https://github.com/yyuueexxiinngg/cqhttp-mirai
 ```
 
-保存后按下 `ctrl-a , 1` 连续组合键，回到 1 号 shell （即 mirai-console 所在的 shell）
-
-按下 `ctrl-c` 退出 mirai 然后重新启动 mirai 并登录 QQ
-
-<!--
-重新加载插件
+启动 miraiOK 并登录 QQ
 
 ```shell
+cd ~/qqbot/mirai
+chmod +x miraiOK
+./miraiOK
+
 # （mirai-console内）
-reload
+login 123456789 ppaasswwdd # 注意改成你的QQ小号的账号密码
 ```
--->
 
 部署完成，现在可以按下 `ctrl-a , d` 连续组合键挂起这两个 shell
 
