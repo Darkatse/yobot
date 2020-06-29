@@ -863,7 +863,7 @@ class ClanBattle:
                         self.vote.max)
             return msg
 
-    def exchange_subscribe(self, group_id: Groupid, qqid: QQid, boss_num):
+    def exchange_subscribe(self, group_id: Groupid, qqid: QQid, boss_num, qqid_b=None):
         '''
         Exchange of reservation order with next person
         [A,B,C] -> [B,A,C] : A's request
@@ -871,7 +871,7 @@ class ClanBattle:
         '''
 
         rev_group = Clan_subscribe.select().where(Clan_subscribe.gid == group_id,
-                                                  Clan_subscribe.subscribe_item == boss_num
+                                                  Clan_subscribe.subscribe_item == boss_num,
                                                   ).order_by(Clan_subscribe.sid)
         is_rev = rev_group.select().where(Clan_subscribe.qqid == qqid)
         if not is_rev.exists():
@@ -879,30 +879,37 @@ class ClanBattle:
             raise UserError(msg)
 
         # ####### 交换信息 #############################
-        isNext = False
         A_info = []
         B_info = []
-        for rev_er in rev_group:
-            if rev_er.qqid == qqid:
-                A_info.append(rev_er.sid)
-                A_info.append(rev_er.qqid)
-                A_info.append(rev_er.message)
-                isNext = True
-                continue
-            if isNext is True:
-                B_info.append(rev_er.sid)
-                B_info.append(rev_er.qqid)
-                B_info.append(rev_er.message)
-                break
-        else:
-            raise UserError('你现在是最后一个预约的，无法让刀，请直接取消预约')
-            
-        # B -> A
-        Clan_subscribe.update(qqid=B_info[1],message=B_info[2]).where(Clan_subscribe.sid == A_info[0]).execute()
-        # A -> B
-        Clan_subscribe.update(qqid=A_info[1], message=A_info[2]).where(Clan_subscribe.sid == B_info[0]).execute()
+        if qqid_b is None:
+            isNext = False
+            for rev_er in rev_group:
+                if rev_er.qqid == qqid:
+                    A_info.append(rev_er.sid)
+                    A_info.append(rev_er.qqid)
+                    A_info.append(rev_er.message)
+                    isNext = True
+                    continue
+                if isNext is True:
+                    B_info.append(rev_er.sid)
+                    B_info.append(rev_er.qqid)
+                    B_info.append(rev_er.message)
+                    break
+            else:
+                raise UserError('你现在是最后一个预约的，无法让刀，请直接取消预约')
+
+            # B -> A
+            Clan_subscribe.update(qqid=B_info[1], message=B_info[2]).where(Clan_subscribe.sid == A_info[0]).execute()
+            # A -> B
+            Clan_subscribe.update(qqid=A_info[1], message=A_info[2]).where(Clan_subscribe.sid == B_info[0]).execute()
 
         ###############################################################################
+        else:
+            if self.check_in_reserve_list(group_id, qqid_b, boss_num):
+                raise ValueError('你只能和预约列表外的人交换')
+            Clan_subscribe.update(qqid=qqid_b, message='被让刀').where(Clan_subscribe.gid==group_id,
+                                                                    Clan_subscribe.subscribe_item==boss_num,
+                                                                    Clan_subscribe.qqid).execute()
         
         
 
@@ -1642,12 +1649,13 @@ class ClanBattle:
                     reply += '：' + m['message']
             return reply
         elif match_num == 26:
-            match = re.match(r'^让刀 *([1-5])$', cmd)
+            match = re.match(r'^让刀 *([1-5]) *(?:\[CQ:at,qq=(\d+)\])? *$', cmd)
             if not match:
-                return '请输入格式：“让刀[1-5]”'
+                return '请输入格式：“让刀[1-5]<@qq>”'
             boss_num = int(match.group(1))
+            qqid_b = int(match.group(2)) if not match.group(2) else None
             try:
-                self.exchange_subscribe(group_id, user_id, boss_num)
+                self.exchange_subscribe(group_id, user_id, boss_num, qqid_b)
             except UserError as e:
                 return str(e)
             else:
