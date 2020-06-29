@@ -1653,7 +1653,7 @@ class ClanBattle:
             if not match:
                 return '请输入格式：“让刀[1-5]<@qq>”'
             boss_num = int(match.group(1))
-            qqid_b = int(match.group(2)) if not match.group(2) else None
+            qqid_b = int(match.group(2)) if match.group(2) else None
             try:
                 self.exchange_subscribe(group_id, user_id, boss_num, qqid_b)
             except UserError as e:
