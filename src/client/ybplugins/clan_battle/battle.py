@@ -909,7 +909,7 @@ class ClanBattle:
                 raise ValueError('你只能和预约列表外的人交换')
             Clan_subscribe.update(qqid=qqid_b, message='被让刀').where(Clan_subscribe.gid==group_id,
                                                                     Clan_subscribe.subscribe_item==boss_num,
-                                                                    Clan_subscribe.qqid).execute()
+                                                                    Clan_subscribe.qqid==qqid).execute()
         
         
 
