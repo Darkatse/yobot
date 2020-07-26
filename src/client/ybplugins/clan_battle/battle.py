@@ -863,7 +863,7 @@ class ClanBattle:
                         self.vote.max)
             return msg
 
-    def exchange_subscribe(self, group_id: Groupid, qqid: QQid, boss_num, qqid_b=None):
+    def exchange_subscribe(self, group_id: Groupid, qqid: QQid, boss_num, qqid_b=None, msg=None):
         '''
         Exchange of reservation order with next person
         [A,B,C] -> [B,A,C] : A's request
@@ -905,11 +905,43 @@ class ClanBattle:
 
         ###############################################################################
         else:
-            if self.check_in_reserve_list(group_id, qqid_b, boss_num):
-                raise ValueError('你只能和预约列表外的人交换')
-            Clan_subscribe.update(qqid=qqid_b, message='被让刀').where(Clan_subscribe.gid==group_id,
-                                                                    Clan_subscribe.subscribe_item==boss_num,
-                                                                    Clan_subscribe.qqid==qqid).execute()
+            # 更新留言
+            if qqid==qqid_b:
+                if msg is not None:
+                    Clan_subscribe.update(qqid=qqid_b, message=msg).where(Clan_subscribe.gid == group_id,
+                                                                            Clan_subscribe.subscribe_item == boss_num,
+                                                                            Clan_subscribe.qqid == qqid).execute()
+                else:
+                    raise UserError('对自己让刀仅限于更新留言，请输入留言')
+            else:
+                # check reservation list first
+                A_found = False
+                for rev_er in rev_group:
+                    if rev_er.qqid == qqid:
+                        A_info.append(rev_er.sid)
+                        A_info.append(rev_er.qqid)
+                        A_info.append(rev_er.message)
+                        A_found = True
+                        continue
+                    if rev_er.qqid == qqid_b:
+                        if A_found is True:
+                            B_info.append(rev_er.sid)
+                            B_info.append(rev_er.qqid)
+                            B_info.append(rev_er.message)
+                            # B -> A
+                            Clan_subscribe.update(qqid=B_info[1], message=B_info[2]).where(
+                                Clan_subscribe.sid == A_info[0]).execute()
+                            # A -> B
+                            Clan_subscribe.update(qqid=A_info[1], message=A_info[2]).where(
+                                Clan_subscribe.sid == B_info[0]).execute()
+                            break
+                        else:
+                            raise UserError('预约列表内让刀时，你只能与自己后面的人让刀')
+                else:
+                    # gift reservation with one who is out of reservation list
+                    Clan_subscribe.update(qqid=qqid_b, message=msg).where(Clan_subscribe.gid == group_id,
+                                                                            Clan_subscribe.subscribe_item == boss_num,
+                                                                            Clan_subscribe.qqid == qqid).execute()
         
         
 
@@ -1649,13 +1681,14 @@ class ClanBattle:
                     reply += '：' + m['message']
             return reply
         elif match_num == 26:
-            match = re.match(r'^让刀 *([1-5]) *(?:\[CQ:at,qq=(\d+)\])? *$', cmd)
+            match = re.match(r'^让刀 *([1-5]) *(?:\[CQ:at,qq=(\d+)\])? *(.*)$', cmd)
             if not match:
-                return '请输入格式：“让刀[1-5]<@qq>”'
+                return '请输入格式：“让刀[1-5]<@qq><留言>”'
             boss_num = int(match.group(1))
             qqid_b = int(match.group(2)) if match.group(2) else None
+            msg = match.group(3) if match.group(3) else None
             try:
-                self.exchange_subscribe(group_id, user_id, boss_num, qqid_b)
+                self.exchange_subscribe(group_id, user_id, boss_num, qqid_b, msg=msg)
             except UserError as e:
                 return str(e)
             else:
