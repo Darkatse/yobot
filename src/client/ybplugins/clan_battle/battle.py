@@ -1474,29 +1474,44 @@ class ClanBattle:
         elif match_num == 5:  # 尾刀
             match = re.match(
                 r'^尾刀 ?(?:\[CQ:at,qq=(\d+)\])? *(昨[日天])? *(?:[\:：](.*))?$', cmd)
-            if not match:
-                return
-            behalf = match.group(1) and int(match.group(1))
-            previous_day = bool(match.group(2))
-            extra_msg = match.group(3)
-            if isinstance(extra_msg, str):
-                extra_msg = extra_msg.strip()
-                if not extra_msg:
-                    extra_msg = None
-            try:
-                boss_status = self.challenge(
-                    group_id,
-                    user_id,
-                    True,
-                    None,
-                    behalf,
-                    extra_msg=extra_msg,
-                    previous_day=previous_day)
-            except ClanBattleError as e:
-                _logger.info('群聊 失败 {} {} {}'.format(user_id, group_id, cmd))
-                return str(e)
-            _logger.info('群聊 成功 {} {} {}'.format(user_id, group_id, cmd))
-            return str(boss_status)
+            ret_msg = ''
+            if match or cmd == '尾刀x':
+                behalf = match.group(1) and int(match.group(1))
+                previous_day = bool(match.group(2))
+                extra_msg = match.group(3)
+                if isinstance(extra_msg, str):
+                    extra_msg = extra_msg.strip()
+                    if not extra_msg:
+                        extra_msg = None
+                try:
+                    boss_status = self.challenge(
+                        group_id,
+                        user_id,
+                        True,
+                        None,
+                        behalf,
+                        extra_msg=extra_msg,
+                        previous_day=previous_day)
+                except ClanBattleError as e:
+                    _logger.info('群聊 失败 {} {} {}'.format(user_id, group_id, cmd))
+                    return str(e)
+                _logger.info('群聊 成功 {} {} {}'.format(user_id, group_id, cmd))
+                ret_msg += str(boss_status)
+            if cmd == '尾刀x':
+                group = Clan_group.get_or_none(group_id=group_id)
+                boss_num = group.boss_num
+                extra_msg = '特权尾刀'
+                try:
+                    self.add_subscribe(group_id, user_id, boss_num, extra_msg)
+                except ClanBattleError as e:
+                    _logger.info('群聊 失败 {} {} {}'.format(user_id, group_id, cmd))
+                    return str(e)
+                _logger.info('群聊 成功 {} {} {}'.format(user_id, group_id, cmd))
+                ret_msg += '\n****获得下轮特权尾刀****'
+                
+            return ret_msg if ret_msg != '' else None
+              
+            
         elif match_num == 6:  # 撤销
             if cmd != '撤销':
                 return
