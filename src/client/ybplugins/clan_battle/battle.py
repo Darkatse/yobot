@@ -1474,6 +1474,8 @@ class ClanBattle:
         elif match_num == 5:  # 尾刀
             match = re.match(
                 r'^尾刀 ?(?:\[CQ:at,qq=(\d+)\])? *(昨[日天])? *(?:[\:：](.*))?$', cmd)
+            group = Clan_group.get_or_none(group_id=group_id)
+            lst_boss_num = int(group.boss_num)
             ret_msg = ''
             if match or cmd == '尾刀x':
                 behalf = match.group(1) and int(match.group(1))
@@ -1498,8 +1500,7 @@ class ClanBattle:
                 _logger.info('群聊 成功 {} {} {}'.format(user_id, group_id, cmd))
                 ret_msg += str(boss_status)
             if cmd == '尾刀x':
-                group = Clan_group.get_or_none(group_id=group_id)
-                boss_num = group.boss_num
+                boss_num = lst_boss_num
                 extra_msg = '特权尾刀'
                 try:
                     self.add_subscribe(group_id, user_id, boss_num, extra_msg)
