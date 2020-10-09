@@ -33,8 +33,8 @@ else:
 
 
 class Yobot:
-    Version = "[v3.6.3]"
-    Version_id = 199
+    Version = "[v3.6.5]"
+    Version_id = 213
     #  "git rev-list --count HEAD"
 
     def __init__(self, *,
@@ -100,8 +100,8 @@ class Yobot:
         # initialize web path
         if not self.glo_setting.get("public_address"):
             try:
-                res = requests.get("http://ip-api.com/json/?fields=8192")
-                ipaddr = res.json()["query"]
+                res = requests.get("http://api.ipify.org/")
+                ipaddr = res.text
             except:
                 with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
                     s.connect(("8.8.8.8", 53))

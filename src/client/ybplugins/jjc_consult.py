@@ -49,6 +49,8 @@ class Consult:
                     row = line.split(",")
                     for col in row:
                         self.nickname_dict[col] = (row[0], row[1])
+        self.output_foler = os.path.join(self.setting['dirname'], 'output')
+        self.output_num = len(os.listdir(self.output_foler))
 
     async def update_nicknames(self):
         nickfile = os.path.join(self.setting["dirname"], "nickname3.csv")
@@ -88,9 +90,9 @@ class Consult:
                     self.__init__(self.setting, refresh_nickfile=True)
                     return self.user_input(cmd, True)
             def_set.add(item)
-            def_lst = list(def_set)
-        if len(def_lst) < 3:
-            raise ValueError("防守人数过少")
+        def_lst = list(def_set)
+        if len(def_lst) < 5:
+            raise ValueError("需要完整的5人防守队伍")
         return def_lst
 
     async def jjcsearch_async(self, def_lst, region):
@@ -117,10 +119,9 @@ class Consult:
             search_source=search_source,
         )
 
-        output_foler = os.path.join(self.setting['dirname'], 'output')
-        num = len(os.listdir(output_foler)) + 1
-        filename = 'solution-{}-{}.html'.format(num, random.randint(0, 999))
-        with open(os.path.join(output_foler, filename), 'w', encoding='utf-8') as f:
+        self.output_num += 1
+        filename = 'solution-{}-{}.html'.format(self.output_num, random.randint(0, 999))
+        with open(os.path.join(self.output_foler, filename), 'w', encoding='utf-8') as f:
             f.write(page)
         addr = urljoin(
             self.setting['public_address'],
