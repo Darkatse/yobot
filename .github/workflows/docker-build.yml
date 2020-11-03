@@ -1,11 +1,13 @@
 name: docker-build
 
-on: [push]
+on:
+  release:
+    types: [created]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    name: auto build
+    runs-on: ubuntu-18.04
+    name: auto build docker
 
     steps:
       - name: Checkout code
@@ -17,4 +19,4 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_ACCESSTOKEN }}
           repository: yobot/yobot
-          tags: latest,slim
+          tags: latest,3
