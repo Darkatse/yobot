@@ -2,7 +2,7 @@
 set -e
 
 # ensure amd64
-if [ $(dpkg --print-architecture) != "amd64" ]; then
+if [ $(uname -m) != "x86_64" ]; then
     echo "Sorry, the architecture of your device is not supported yet."
     exit
 fi
@@ -21,14 +21,13 @@ What will it do:
 2. run yobot in docker
 3. run go-cqhttp in docker
 
-After script finished, you need to press 'ctrl-p, ctrl-q' to detach the container.
+After script finished, you need to press 'ctrl-P, ctrl-Q' to detach the container.
+此脚本执行结束并登录后，你需要按下【ctrl-P，ctrl-Q】连续组合键以挂起容器
 
 "
 
 read -p "请输入作为机器人的QQ号：" qqid
 read -p "请输入作为机器人的QQ密码：" qqpassword
-export qqid
-export qqpassword
 
 echo "开始安装，请等待"
 
@@ -46,7 +45,7 @@ docker pull alpine
 docker pull yobot/yobot
 
 echo "downloading latest gocqhttp"
-docker run --rm -v ${PWD}:/work -w /work python:3.7-slim-buster python3 -c "
+docker run --rm -v ${PWD}:/work -w /work yobot/yobot python3 -c "
 import json
 import urllib.request
 url = 'https://api.github.com/repos/Mrs4s/go-cqhttp/releases'
@@ -67,44 +66,56 @@ rm go-cqhttp.tar.gz -f
 echo "building gocqhttp container"
 echo "
 FROM alpine:latest
-ADD go-cqhttp /bin/go-cqhttp
-WORKDIR /bot
-ENTRYPOINT /bin/go-cqhttp
+ADD go-cqhttp /usr/bin/cqhttp
+WORKDIR /data
+ENTRYPOINT /usr/bin/cqhttp
 ">Dockerfile
-docker build . -t gocqhttp
-rm Dockerfile -f
+docker build -t gocqhttp .
+rm Dockerfile go-cqhttp -f
 
-echo "initializing gocqhttp configure file"
-docker run --rm \
-           -v ${PWD}/gocqhttp_data:/bot \
-           gocqhttp >/dev/null 2>&1
+access_token="$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)"
 
-echo "writing configure files"
-docker run --rm -v ${PWD}:/work -w /work -e qqid -e qqpassword python:3.7-slim-buster python3 -c "
-import json, os, random, string
-access_token = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=16))
-with open('yobot_data/yobot_config.json', 'w') as f:
-    json.dump({'access_token': access_token}, f, indent=4)
-with open('gocqhttp_data/config.json', 'r+') as f:
-    config = json.load(f)
-    config['uin'] = int(os.environ['qqid'])
-    config['password'] = os.environ['qqpassword']
-    config['access_token'] = access_token
-    config['enable_db'] = False
-    config['web_ui']['enabled'] = False
-    config['http_config']['enabled'] = False
-    config['ws_config']['enabled'] = False
-    config['ws_reverse_servers'] = [{
-        'enabled': True,
-        'reverse_url': 'ws://yobot:9222/ws/',
-        'reverse_api_url': '',
-        'reverse_event_url': '',
-        'reverse_reconnect_interval': 3000
-    }]
-    f.seek(0)
-    f.truncate()
-    json.dump(config, f, indent=4)
-"
+echo "
+{
+  \"uin\": ${qqid},
+  \"password\": \"${qqpassword}\",
+  \"encrypt_password\": false,
+  \"password_encrypted\": \"\",
+  \"enable_db\": false,
+  \"access_token\": \"${access_token}\",
+  \"relogin\": {
+    \"enabled\": true,
+    \"relogin_delay\": 3,
+    \"max_relogin_times\": 0
+  },
+  \"_rate_limit\": {
+    \"enabled\": false,
+    \"frequency\": 1,
+    \"bucket_size\": 1
+  },
+  \"post_message_format\": \"string\",
+  \"ignore_invalid_cqcode\": false,
+  \"force_fragmented\": true,
+  \"heartbeat_interval\": 5,
+  \"use_sso_address\": false,
+  \"http_config\": {
+    \"enabled\": false
+  },
+  \"ws_config\": {
+    \"enabled\": false
+  },
+  \"ws_reverse_servers\": [
+    {
+      \"enabled\": true,
+      \"reverse_url\": \"ws://yobot:9222/ws/\",
+      \"reverse_reconnect_interval\": 3000
+    }
+  ],
+  \"web_ui\": {
+    \"enabled\": false
+  }
+}
+">gocqhttp_data/config.json
 
 echo "starting yobot"
 docker run -d \
@@ -112,11 +123,12 @@ docker run -d \
            -p 9222:9222 \
            --network qqbot \
            -v ${PWD}/yobot_data:/yobot/yobot_data \
+           -e YOBOT_ACCESS_TOKEN="$access_token" \
            yobot/yobot
 
 echo "starting gocqhttp"
 docker run -it \
            --name gocqhttp \
            --network qqbot \
-           -v ${PWD}/gocqhttp_data:/bot \
+           -v ${PWD}/gocqhttp_data:/data \
            gocqhttp
