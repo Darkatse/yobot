@@ -67,7 +67,20 @@ Invoke-WebRequest https://down.yobot.club/yobot/go-cqhttp-v0.9.29-fix2-windows-a
 Expand-ZIPFile go-cqhttp-v0.9.29-fix2-windows-amd64.zip -Destination .\mirai\
 Remove-Item go-cqhttp-v0.9.29-fix2-windows-amd64.zip
 
-Invoke-WebRequest https://down.yobot.club/yobot/yobot-3.6.7-windows64.zip -OutFile .\yobot.zip
+# New-Item -Path ".\mirai\升级gocqhttp.bat" -ItemType File -Value @"
+# @echo off
+# :PROMPT
+# SET /P AREYOUSURE=comfirm update? (y/[n])?
+# IF /I "%AREYOUSURE%" NEQ "y" GOTO END
+
+# echo -y | go-cqhttp.exe update
+
+
+# :END
+# pause
+# "@
+
+Invoke-WebRequest https://down.yobot.club/yobot/yobot-3.6.10-windows64.zip -OutFile .\yobot.zip
 
 Expand-ZIPFile yobot.zip -Destination .\yobot\
 Remove-Item yobot.zip
@@ -138,7 +151,7 @@ New-Item -Path .\mirai\config.json -ItemType File -Value @"
   "ws_reverse_servers": [
     {
       "enabled": true,
-      "reverse_url": "ws://localhost:${port}/ws/",
+      "reverse_url": "ws://127.0.0.1:${port}/ws/",
       "reverse_reconnect_interval": 3000
     }
   ],

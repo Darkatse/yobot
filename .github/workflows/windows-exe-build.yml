@@ -11,18 +11,38 @@ jobs:
     name: build windows binary
 
     steps:
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.7"
+
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Cache Dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~\AppData\Local\pip\Cache
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
 
       - name: Build exe binary and archive
         shell: cmd
         run: |
           cd .\src\client
-          pip install -r requirements.txt
-          pip install pyinstaller
+
+          echo ::group::Install Dependencies
+          pip install wheel
+          pip install pyinstaller -r requirements.txt
+          echo ::endgroup::
+
+          echo ::group::Build Binary
+          SET PYTHONOPTIMIZE=1
           pyinstaller main.spec
+          echo ::endgroup::
+
+          echo ::group::Archive Binary
           cd .\dist
           7z a yobot-windows64.zip .\yobot.exe
+          echo ::endgroup::
 
       - name: Create Release
         id: create_release
@@ -42,5 +62,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./src/client/dist/yobot-windows64.zip
-          asset_name: yobot-${{ github.ref }}-windows64.zip
+          asset_name: yobot-${GITHUB_REF##*/}-windows64.zip
           asset_content_type: application/zip
