@@ -1679,7 +1679,7 @@ class ClanBattle:
             return '请在面板中查看：'+url
         elif match_num == 10:  # 预约
             # 预约 boss
-            match = re.match(r'^预约([1-5]) *(?:[\:：](.*))?$', cmd)
+            match = re.match(r'^预约([1-5]) *(?:(.*))?$', cmd)
             if not match:
                 return
             boss_num = int(match.group(1))
