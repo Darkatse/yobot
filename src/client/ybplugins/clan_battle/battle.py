@@ -993,8 +993,8 @@ class ClanBattle:
         for subscribe in Clan_subscribe.select().where(
             *query
         ).order_by(
-            # Clan_subscribe.sid
-            getattr(Clan_subscribe, order_by)
+            Clan_subscribe.sid
+            # getattr(Clan_subscribe, order_by)
         ):
             subscribe_list.append({
                 'boss': subscribe.subscribe_item,
